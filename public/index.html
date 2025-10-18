@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL to QRコード変換</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .input-section {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="text"].error {
+            border-color: #e74c3c;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .option-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .qr-display {
+            text-align: center;
+            margin-bottom: 2rem;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #qrcode {
+            display: none;
+            margin: 1rem 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            background: white;
+        }
+
+        #qrcode.show {
+            display: block;
+        }
+
+        .placeholder {
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        button {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .options {
+                flex-direction: column;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 URL to QRコード変換</h1>
+            <p>URLを入力してQRコードを生成しましょう</p>
+        </header>
+
+        <div class="card">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="urlInput">URL</label>
+                    <input
+                        type="text"
+                        id="urlInput"
+                        placeholder="https://example.com"
+                        aria-label="URL入力"
+                        autocomplete="url"
+                    />
+                    <div id="errorMessage" class="error-message" role="alert"></div>
+                </div>
+
+                <div class="options">
+                    <div class="option-group">
+                        <label for="sizeSelect">サイズ</label>
+                        <select id="sizeSelect" aria-label="QRコードサイズ選択">
+                            <option value="128">小 (128x128)</option>
+                            <option value="256" selected>中 (256x256)</option>
+                            <option value="512">大 (512x512)</option>
+                        </select>
+                    </div>
+
+                    <div class="option-group">
+                        <label for="errorLevel">エラー訂正レベル</label>
+                        <select id="errorLevel" aria-label="エラー訂正レベル選択">
+                            <option value="L">L (低)</option>
+                            <option value="M" selected>M (中)</option>
+                            <option value="Q">Q (高)</option>
+                            <option value="H">H (最高)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="qr-display">
+                <div id="placeholder" class="placeholder">
+                    URLを入力するとQRコードが生成されます
+                </div>
+                <div id="loading" class="loading">
+                    QRコード生成中
+                </div>
+                <img id="qrcode" alt="生成されたQRコード" />
+            </div>
+
+            <div class="button-group">
+                <button id="generateBtn" class="btn-primary">
+                    QRコード生成
+                </button>
+                <button id="downloadBtn" class="btn-secondary" disabled>
+                    ダウンロード
+                </button>
+                <button id="clearBtn" class="btn-secondary">
+                    クリア
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 URL to QRコード変換</p>
+        <p>Powered by Miyabi Framework</p>
+    </footer>
+
+    <script type="module" src="../dist/index.js"></script>
+</body>
+</html>
